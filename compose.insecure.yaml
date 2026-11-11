@@ -1,0 +1,38 @@
+# PROVIDED: the stack the pentester broke into. Read it with a hostile eye and count the problems (there are at least twelve).
+name: pollie-insecure
+services:
+  api:
+    image: pollie:latest
+    build: .
+    privileged: true
+    user: root
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://pollie:pollie123@db:5432/pollie
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: not-so-secret
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/app
+    depends_on: [db, redis]
+  worker:
+    image: pollie:latest
+    user: root
+    command: ["python", "-m", "pollie.worker"]
+    environment:
+      DATABASE_URL: postgresql://pollie:pollie123@db:5432/pollie
+      REDIS_URL: redis://redis:6379
+    depends_on: [db, redis]
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: pollie
+      POSTGRES_PASSWORD: pollie123
+      POSTGRES_DB: pollie
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"

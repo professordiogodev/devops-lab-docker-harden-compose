@@ -1,0 +1,16 @@
+# TODO: the same four services (api, worker, db, redis), hardened. Project name pollie-hardened.
+#
+# api and worker (both from the image built by ./Dockerfile; tag it pollie:1, never :latest):
+#   - run as the numeric user 10001, read_only: true with a tmpfs for /tmp, cap_drop: [ALL], security_opt no-new-privileges:true
+#   - no privileged mode, no Docker socket, no bind mount of the source code
+#   - limits: memory 256m, pids_limit 100, cpus 0.5
+#   - the settings come from env_file: .env (git ignores it; ./setup.sh generates it with a random password): no password in this file
+#   - api: port 8000 published ONLY on the loopback address (127.0.0.1:8000:8000); a healthcheck on /healthz (python urllib, no curl);
+#          restart unless-stopped
+# worker: restart unless-stopped; a healthcheck on http://127.0.0.1:9100/healthz (the worker serves its own health port)
+# EVERY service needs a healthcheck, or `docker compose up --wait` refuses to wait for it
+# db (postgres:16):  password from a Compose secret (POSTGRES_PASSWORD_FILE) read from ./secrets/db_password.txt, a named volume,
+#                    healthcheck with pg_isready, NO published ports, limits, no-new-privileges
+# redis (redis:7-alpine): a healthcheck (redis-cli with the password from the secret file, ping), NO published ports, read_only with a tmpfs for /data, cap_drop ALL, no-new-privileges, limits,
+#                    started with a password from the secret ./secrets/redis_password.txt (command: sh -c 'exec redis-server --requirepass "$(cat /run/secrets/redis_password)"')
+# Networks: `frontend` (api only) and `backend` with internal: true (api, worker, db, redis). db and redis are ONLY on backend.
