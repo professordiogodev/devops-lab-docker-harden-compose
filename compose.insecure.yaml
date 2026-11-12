@@ -14,7 +14,7 @@ services:
       SECRET_KEY: not-so-secret
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./:/app
+      - ./pollie:/app
     depends_on: [db, redis]
   worker:
     image: pollie:latest
