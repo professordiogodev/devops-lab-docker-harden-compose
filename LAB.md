@@ -2,9 +2,18 @@
 
 ## The situation
 
-Before Pollie goes public, the security team asked an external pentester to look at it. Twenty minutes later they sent a polite report. With one `docker exec` into the API container they were **root**, they could read the **Docker socket** (which means root on the host), the database was **open on the internet** with the password `pollie123`, Redis had **no password at all**, the secrets were in plain environment variables visible with `docker inspect`, and one container with a memory leak could take the whole machine down.
+```text
+PENETRATION TEST REPORT - Pollie (pre-launch)               duration: 20 minutes
+F-1  critical  one `docker exec` into the API container: root
+F-2  critical  the Docker socket is readable from inside: root on the host
+F-3  critical  PostgreSQL open to the internet, password `pollie123`
+F-4  high      Redis has no password at all
+F-5  high      secrets sit in plain environment variables (see `docker inspect`)
+F-6  medium    one container with a memory leak can take the whole machine down
+Root cause     : none of this is a bug in Pollie. It is all in `compose.insecure.yaml`.
+```
 
-None of it was a bug in Pollie. It was all in one file, `compose.insecure.yaml`. You will rewrite it so that every one of those attacks fails, and you will prove each fix the only honest way: by running the attack yourself, before and after.
+The report was polite and short. Your task is to rewrite that one file so that every finding fails, and to prove each fix the only honest way: by running the attack yourself, **before and after**.
 
 > **Your mission**
 > - Read `compose.insecure.yaml` like an attacker and attack it
@@ -22,7 +31,7 @@ Fork this repository, clone your fork and run `./setup.sh`. It clones Pollie, ge
 
 ---
 
-## Part 1 - Attack the insecure stack
+## Act 1 - Attack the insecure stack
 
 ```bash
 docker compose -f compose.insecure.yaml up -d
@@ -45,7 +54,7 @@ Write down what each one gives you. For the socket, think about this: with `/var
 
 ---
 
-## Part 2 - Write the hardened stack
+## Act 2 - Write the hardened stack
 
 `compose.hardened.yaml` has the whole specification in its comments. The ideas behind each line:
 
